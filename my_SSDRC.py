@@ -53,9 +53,11 @@ def voicing_index(x):
 if __name__ == "__main__":
 
     args = parser.parse_args()
+    np.set_printoptions(threshold=np.inf)
 
     # 音声をロード
     x, fs = librosa.load(args.infile)
+    # print(x.shape)
 
     V = voicing_index(x)
     # print(V.shape)
@@ -77,17 +79,15 @@ if __name__ == "__main__":
         cps_order = 32
         cps[cps_order:len(cps[:, i])-cps_order+1, i] = 0
         spec[:, i] = np.fft.fft(cps[:, i])
+    # print(cps.shape)
     # print(spec.shape)
 
-    # mfccはスペクトル傾斜を求めるために使う
-    mfcc = librosa.feature.mfcc(x)
-    # print(mfcc.shape)
-
     # スペクトル傾斜を求める
+    log_T = np.zeros(spec.shape[1])
     T = np.zeros(spec.shape[1])
     for i in range(0, len(T)):
-        a = mfcc[0, i] + 2.0 * mfcc[1, i]
-        T[i] = 10.0 ** a
+        log_T[i] =cps[0, i] + 2 * cps[1, i]
+        T[i] = np.exp(log_T[i])
     # print(T.shape)
 
     # H1フィルタの計算
@@ -97,5 +97,5 @@ if __name__ == "__main__":
         A = spec[:, i] / T[i]
         B = b * V[0, i]
         H1[:, i] = np.power(A, B)
-
     # print(H1)
+    # print(H1.shape)
